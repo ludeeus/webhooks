@@ -4,6 +4,6 @@ RUN mkdir -p /app
 
 COPY setup.py /app/setup.py
 COPY runserver.sh /app/runserver.sh
-COPY webhook /app/webhook
+COPY webhooks /app/webhooks
 
 ENTRYPOINT ["bash", "/app/runserver.sh"]

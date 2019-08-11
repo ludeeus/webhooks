@@ -1,10 +1,9 @@
 """Setup the package."""
 from setuptools import setup, find_packages
-from webhooks.const import VERSION
 
 setup(
     name="webhooks",
-    version=VERSION,
+    version="0.1.0",
     url="https://github.com/ludeeus/webhooks",
     author="Ludeeus",
     author_email="hi@ludeeus.dev",
