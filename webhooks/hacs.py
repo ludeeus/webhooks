@@ -39,7 +39,7 @@ class Hacs:
     async def handle_new_repo_pr_data(self, issue_data):
         """Handle PR's to the data branch."""
         issue_number = issue_data["number"]
-        submitter = issue_data["pullrequest"]["user"]["login"]
+        submitter = issue_data["pull_request"]["user"]["login"]
         async with aiohttp.ClientSession() as session:
             lables = ["New default repository"]
 
