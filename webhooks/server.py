@@ -17,8 +17,12 @@ async def hacs(request):
     await handler.initilize_hacs()
 
     event_data = await request.json()
-    if event_data["pull_request"]["base"]["ref"] == "data":
-        await handler.handle_new_repo_pr_data(event_data)
+    if "pull_request" in event_data:
+        issue_number = event_data["number"]
+        submitter = event_data["pullrequest"]["user"]["login"]
+        await handler.handle_greeting(issue_number, submitter)
+        if event_data["pull_request"]["base"]["ref"] == "data":
+            await handler.handle_new_repo_pr_data(event_data)
     return web.Response(status=200)
 
 

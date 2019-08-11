@@ -21,18 +21,25 @@ class Hacs:
 
     async def handle_greeting(self, issue_number, submitter):
         """Handle greetings."""
-        greeting = f"Hi, @{submitter} 👋\n\n"
-        greeting += "An automatic task is now running some initial checks before this can be merged.\n"
-        greeting += (
-            "When those are done, someone will manually ensure that that it's OK. 💃\n\n"
-        )
-        greeting += "While you wait, you can have a look at [this cute kitten 😺](https://www.youtube.com/watch?v=0Bmhjf0rKe8)"
-        await self.hacs.comment_on_issue(issue_number, greeting)
+        comments = await self.hacs.list_issue_comments(issue_number)
+        greeting_done = False
+        for comment in comments:
+            if f"Hi, @{submitter} 👋\n\n" in comment.body:
+                greeting_done = True
+                break
+        if not greeting_done:
+            greeting = f"Hi, @{submitter} 👋\n\n"
+            greeting += "An automatic task is now running some initial checks before this can be merged.\n"
+            greeting += (
+                "When those are done, someone will manually ensure that that it's OK. 💃\n\n"
+            )
+            greeting += "While you wait, you can have a look at [this cute kitten 😺](https://www.youtube.com/watch?v=0Bmhjf0rKe8)"
+            await self.hacs.comment_on_issue(issue_number, greeting)
 
     async def handle_new_repo_pr_data(self, issue_data):
         """Handle PR's to the data branch."""
         issue_number = issue_data["number"]
-        submitter = issue_data["sender"]["login"]
+        submitter = issue_data["pullrequest"]["user"]["login"]
         async with aiohttp.ClientSession() as session:
             lables = ["New default repository"]
 
@@ -49,15 +56,6 @@ class Hacs:
 
             if len(categiories) > 1:
                 lables.append("Manual review required")
-
-            comments = await self.hacs.list_issue_comments(issue_number)
-            greeting_done = False
-            for comment in comments:
-                if f"Hi, @{submitter} 👋\n\n" in comment.body:
-                    greeting_done = True
-                    break
-            if not greeting_done:
-                await self.handle_greeting(issue_number, submitter)
 
             issue_comment = "# Repository checks\n\n"
             issue_comment += "These checks are automatic.\n\n"
@@ -99,6 +97,7 @@ class Hacs:
                     if "Manual review required" not in lables:
                         lables.append("Manual review required")
 
+            comments = await self.hacs.list_issue_comments(issue_number)
             comment_number = None
             for comment in comments:
                 if "# Repository checks\n\n" in comment.body:
@@ -109,10 +108,8 @@ class Hacs:
                 issue_number, labels=lables, assignees=["ludeeus"]
             )
             if comment_number is None:
-                pass
                 await self.hacs.comment_on_issue(issue_number, issue_comment)
             else:
-                pass
                 await self.hacs.update_comment_on_issue(comment_number, issue_comment)
 
 
