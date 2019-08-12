@@ -121,7 +121,7 @@ class Issue(Common):
         """Comment on a closed issue."""
         if self.data["issue"]["author_association"] != "COLLABORATOR":
             from .const import CLOSED_ISSUE
-            user = self.data["comment"]["user"]
+            user = self.data["comment"]["user"]["login"]
             message = CLOSED_ISSUE.format(user)
             await self.create_comment(message)
 
