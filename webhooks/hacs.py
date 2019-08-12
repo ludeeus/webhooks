@@ -37,7 +37,7 @@ class Hacs:
         if event_data.get("issue") is not None:
             print("We now know that this is a issue.")
             executer = Issue(event_data, self.hacs, self.aiogithub, self.session)
-            executer.issue_number = event_data["number"]
+            executer.issue_number = event_data["issue"]["number"]
             executer.action = event_data["action"]
             executer.submitter = event_data["issue"]["user"]["login"]
             await executer.known_issue()
@@ -102,7 +102,9 @@ class Issue(Common):
 
             if is_known:
                 await self.create_comment(message)
-                await self.hacs_repository.update_issue(status="closed")
+                await self.hacs_repository.update_issue(
+                    self.issue_number, state="closed"
+                )
 
 
 class PullRequest(Common):
