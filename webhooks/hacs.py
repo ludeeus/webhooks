@@ -36,6 +36,9 @@ class Hacs:
 
         if event_data.get("issue") is not None:
             print("We now know that this is a issue.")
+            if event_data.get("comment") is not None:
+                if event_data["comment"]["user"]["login"] == "ludeeus":
+                    return
             executer = Issue(event_data, self.hacs, self.aiogithub, self.session)
             executer.issue_number = event_data["issue"]["number"]
             executer.action = event_data["action"]
@@ -119,11 +122,10 @@ class Issue(Common):
 
     async def comment_on_closed_issue(self):
         """Comment on a closed issue."""
-        if self.data["issue"]["author_association"] != "COLLABORATOR":
-            from .const import CLOSED_ISSUE
-            user = self.data["comment"]["user"]["login"]
-            message = CLOSED_ISSUE.format(user)
-            await self.create_comment(message)
+        from .const import CLOSED_ISSUE
+        user = self.data["comment"]["user"]["login"]
+        message = CLOSED_ISSUE.format(user)
+        await self.create_comment(message)
 
 
 
