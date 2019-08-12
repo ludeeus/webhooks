@@ -6,7 +6,7 @@ KNOWN_ISSUES = {
 
 
 CLOSED_ISSUE = """
-Hi, {}
+Hi, @{}
 
 This issue is closed, closed issues are ignored.
 If you have issues similar to this, please open a seperate issue.
