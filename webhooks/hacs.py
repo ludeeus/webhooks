@@ -8,22 +8,24 @@ from aiogithubapi import AIOGitHub
 class Hacs:
     """HACS Auotmations."""
 
-    def __init__(self):
+    def __init__(self, session):
         """initialize."""
+        self.session = session
         self.hacs = None
         self.token = None
         self.aiogithub = None
 
     async def initilize_hacs(self):
         """Extra initialization."""
-        self.aiogithub = AIOGitHub(self.token, aiohttp.ClientSession())
+        print("Initializing HACS")
+        self.aiogithub = AIOGitHub(self.token, self.session)
         self.hacs = await self.aiogithub.get_repo("custom-components/hacs")
 
     async def execute(self, event_data):
         """Run tasks based on the content in the event data."""
         if event_data.get("pull_request") is not None:
-            # We now know that this is a PR.
-            executer = PullRequest(event_data, self.hacs, self.aiogithub)
+            print("We now know that this is a PR.")
+            executer = PullRequest(event_data, self.hacs, self.aiogithub, self.session)
             executer.issue_number = event_data["number"]
             executer.action = event_data["action"]
             executer.submitter = event_data["pull_request"]["user"]["login"]
@@ -33,8 +35,8 @@ class Hacs:
                 await executer.handle_new_repo_pr_data()
 
         if event_data.get("issue") is not None:
-            # We now know that this is a issue.
-            executer = Issue(event_data, self.hacs, self.aiogithub)
+            print("We now know that this is a issue.")
+            executer = Issue(event_data, self.hacs, self.aiogithub, self.session)
             executer.issue_number = event_data["number"]
             executer.action = event_data["action"]
             executer.submitter = event_data["issue"]["user"]["login"]
@@ -42,8 +44,9 @@ class Hacs:
 
 
 class Common:
-    def __init__(self, data, hacs_repository, aiogithub):
+    def __init__(self, data, hacs_repository, aiogithub, session):
         self.data = data
+        self.session = session
         self.issue_number = None
         self.submitter = None
         self.action = None
@@ -69,11 +72,15 @@ class Common:
     async def create_comment(self, message):
         """Comment on an issue/PR"""
         message += "\n\n\n_This message was automatically generated🚀_"
+        print(f"Adding comment to issue {self.issue_number}")
+        print(message)
         await self.hacs_repository.comment_on_issue(self.issue_number, message)
 
     async def update_comment(self, message, comment_number):
         """Update a comment on an issue/PR"""
         message += "\n\n\n_This message was automatically generated🚀_"
+        print(f"Adding comment to issue {self.issue_number}")
+        print(message)
         await self.hacs_repository.update_comment_on_issue(comment_number, message)
 
 
@@ -81,11 +88,13 @@ class Issue(Common):
     async def known_issue(self):
         """Post a comment if this is a known issue, then close the issue."""
         if self.action == "opened":
+            print("Searching for known issues")
             from .const import KNOWN_ISSUES
 
             is_known = False
             message = None
             for issue in KNOWN_ISSUES:
+                print(f"Searching for {issue}")
                 if issue in self.data["issue"]["body"]:
                     is_known = True
                     message = KNOWN_ISSUES[issue]
@@ -102,21 +111,20 @@ class PullRequest(Common):
         files = []
         added = []
         removed = []
-        async with aiohttp.ClientSession() as session:
-            webclient = WebClient(session)
+        webclient = WebClient(self.session)
 
-            diff = await webclient.async_get_text(
-                f"https://patch-diff.githubusercontent.com/raw/custom-components/hacs/pull/{self.issue_number}.diff",
-                {},
-            )
+        diff = await webclient.async_get_text(
+            f"https://patch-diff.githubusercontent.com/raw/custom-components/hacs/pull/{self.issue_number}.diff",
+            {},
+        )
 
-            for line in diff.split("\n"):
-                if "+++" in line:
-                    files.append(line.split("/")[-1])
-                elif "-  " in line:
-                    removed.append(line.split('"')[1])
-                elif "+  " in line:
-                    added.append(line.split('"')[1])
+        for line in diff.split("\n"):
+            if "+++" in line:
+                files.append(line.split("/")[-1])
+            elif "-  " in line:
+                removed.append(line.split('"')[1])
+            elif "+  " in line:
+                added.append(line.split('"')[1])
 
         return files, added, removed
 

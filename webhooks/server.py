@@ -1,6 +1,6 @@
 """Server handling."""
 import os
-from aiohttp import web
+from aiohttp import web, ClientSession
 
 from webhooks.hacs import Hacs
 
@@ -13,10 +13,11 @@ TOKEN = os.getenv("GITHUB_TOKEN")
 async def hacs(request):
     """Handle POST request."""
     event_data = await request.json()
-    handler = Hacs()
-    handler.token = TOKEN
-    await handler.initilize_hacs()
-    await handler.execute(event_data)
+    async with ClientSession() as session:
+        handler = Hacs(session)
+        handler.token = TOKEN
+        await handler.initilize_hacs()
+        await handler.execute(event_data)
     return web.Response(status=200)
 
 
