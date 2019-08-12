@@ -40,7 +40,17 @@ class Hacs:
             executer.issue_number = event_data["issue"]["number"]
             executer.action = event_data["action"]
             executer.submitter = event_data["issue"]["user"]["login"]
-            await executer.known_issue()
+            if event_data["issue"]["state"] == "open":
+                print("The issue is open.")
+                await executer.known_issue()
+
+            elif event_data["issue"]["state"] == "closed":
+                print("The issue is closed.")
+                if executer.action == "created":
+                    if event_data.get("comment") is not None:
+                        print("Someone commented on a closed issue!")
+                        await executer.comment_on_closed_issue()
+
 
 
 class Common:
@@ -105,6 +115,16 @@ class Issue(Common):
                 await self.hacs_repository.update_issue(
                     self.issue_number, state="closed"
                 )
+
+
+    async def comment_on_closed_issue(self):
+        """Comment on a closed issue."""
+        if self.data["issue"]["author_association"] != "COLLABORATOR":
+            from .const import CLOSED_ISSUE
+            user = self.data["comment"]["user"]
+            message = CLOSED_ISSUE.format(user)
+            await self.create_comment(message)
+
 
 
 class PullRequest(Common):
