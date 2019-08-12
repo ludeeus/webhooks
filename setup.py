@@ -9,5 +9,5 @@ setup(
     author_email="hi@ludeeus.dev",
     description="Handle webhook connections for various automations",
     packages=find_packages(),
-    install_requires=["aiogithubapi", "integrationhelper", "aiohttp", "PyJWT"],
+    install_requires=["aiogithubapi", "integrationhelper", "aiohttp", "PyJWT", "cryptography"],
 )
